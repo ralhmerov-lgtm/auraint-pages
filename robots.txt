@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /404.html
+Disallow: /admin/
+Disallow: /lead.php
+Disallow: /weather.php
+Disallow: /backup.php
+
+Sitemap: https://auraint.ru/sitemap.xml
