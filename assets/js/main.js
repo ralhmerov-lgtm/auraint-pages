@@ -8,6 +8,9 @@
   const lite = () => document.documentElement.classList.contains('lite');
   const slowNet = () => { const c = navigator.connection; return !!c && (c.saveData || (c.downlink && c.downlink < 4) || /2g|3g/.test(c.effectiveType || '')); };   // слабое устройство, экономия трафика или низкий заряд
 
+  // московское время (часы на всех страницах): UTC+3 без перехода на летнее
+  const mskHour = () => { const d = new Date(Date.now() + 3 * 36e5); return d.getUTCHours() + d.getUTCMinutes() / 60 + d.getUTCSeconds() / 3600; };
+
   /* ── 1. Главная: свет за окном по времени суток ─────────────── */
   const media = $('#heroMedia');
   if (media) {
@@ -64,7 +67,8 @@
       $('#dtPhase').textContent = NAME[t < .5 ? a : b];
     };
     const fmt = h => { h = ((h % 24) + 24) % 24; const H = Math.floor(h), M = Math.floor((h - H) * 60); return String(H).padStart(2, '0') + ':' + String(M).padStart(2, '0'); };
-    const nowHour = () => { const d = new Date(); return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600; };
+    // «час кадров» по московскому солнцу (auraTime в разметке главной), часы показывают московское время
+    const nowHour = () => window.auraTime ? auraTime.scene() : mskHour();
     const loadLayer = img => new Promise(res => {
       if (!img.dataset.src) return res();
       img.onload = img.onerror = () => res();
@@ -72,7 +76,7 @@
     });
 
     var playing = false;
-    const tick = () => { if (!playing) { const h = nowHour(); paint(h); $('#dtTime').textContent = fmt(h); } };
+    const tick = () => { if (!playing) { paint(nowHour()); $('#dtTime').textContent = fmt(mskHour()); } };
     const m0 = mixAt(nowHour());
     if (FMODE) { tick(); requestAnimationFrame(() => document.body.classList.add('is-ready')); }
     else Promise.all([loadLayer(layers[m0.a]), loadLayer(layers[m0.b])]).then(() => {
@@ -140,7 +144,7 @@
   } else {
     // внутренние страницы: просто часы
     const clock = $('#dtTime');
-    const tickClock = () => { const d = new Date(); clock.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    const tickClock = () => { const h = mskHour(), H = Math.floor(h), M = Math.floor((h - H) * 60); clock.textContent = String(H).padStart(2, '0') + ':' + String(M).padStart(2, '0'); };
     if (clock) { tickClock(); setInterval(tickClock, 20000); }
     document.body.classList.add('is-ready');
   }
